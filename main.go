@@ -3,7 +3,7 @@ package main
 import (
 	"sync"
 
-	"app"
+	"github.com/maksymshtarkberg/Go-routine/app"
 )
 
 func main() {
@@ -18,10 +18,24 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	// Intermediate channels for separate processing
+	uppercaseInput := make(chan string)
+	reverseInput := make(chan string)
+
 	go app.ReadLines(filePath, lines)
 
-	go app.ProcessLines(app.UppercaseProcessor{}, lines, uppercaseLines, &wg)
-	go app.ProcessLines(app.ReverseProcessor{}, lines, reverseLines, &wg)
+	// Intermediate goroutine to split input to two separate channels
+	go func() {
+		defer close(uppercaseInput)
+		defer close(reverseInput)
+		for line := range lines {
+			uppercaseInput <- line
+			reverseInput <- line
+		}
+	}()
+
+	go app.ProcessLines(app.UppercaseProcessor{}, uppercaseInput, uppercaseLines, &wg)
+	go app.ProcessLines(app.ReverseProcessor{}, reverseInput, reverseLines, &wg)
 
 	go func() {
 		wg.Wait()
