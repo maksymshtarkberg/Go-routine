@@ -16,27 +16,27 @@ func main() {
 	reverseLines := make(chan string)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	// Intermediate channels for separate processing
-	// uppercaseInput := make(chan string)
-	// reverseInput := make(chan string)
+	uppercaseInput := make(chan string)
+	reverseInput := make(chan string)
 
 	go app.ReadLines(filePath, lines)
 
 	// Intermediate goroutine to split input to two separate channels
 	go func() {
-		defer close(lines)
-		// defer close(uppercaseInput)
-		// defer close(reverseInput)
-		// for line := range lines {
-		// 	uppercaseInput <- line
-		// 	reverseInput <- line
-		// }
+		defer close(uppercaseInput)
+		defer close(reverseInput)
+		for line := range lines {
+			uppercaseInput <- line
+			reverseInput <- line
+		}
+		wg.Done()
 	}()
 
-	go app.ProcessLines(app.UppercaseProcessor{}, lines, uppercaseLines, &wg)
-	go app.ProcessLines(app.ReverseProcessor{}, lines, reverseLines, &wg)
+	go app.ProcessLines(app.UppercaseProcessor{}, uppercaseInput, uppercaseLines, &wg)
+	go app.ProcessLines(app.ReverseProcessor{}, reverseInput, reverseLines, &wg)
 
 	go func() {
 		wg.Wait()
