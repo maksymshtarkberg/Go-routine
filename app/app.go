@@ -52,7 +52,7 @@ func ReadLines(filePath string, out chan<- string) {
 		fmt.Println("Error reading file:", err)
 	}
 
-	close(out)
+	// close(out)
 }
 
 // ProcessLines processes lines using a given processor and sends the results to a channel
